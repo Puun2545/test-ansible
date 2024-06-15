@@ -1,8 +1,5 @@
 - hosts: webservers
   become: yes
-  become_user: root
-  become_method: sudo
-  become_password: 1234
   tasks:
 
     - name: update
