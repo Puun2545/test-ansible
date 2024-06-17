@@ -60,8 +60,3 @@
     enabled: yes
     state: started
 
-handlers:
-  - name: Restart Nexus
-    systemd:
-      name: nexus
-      state: restarted
