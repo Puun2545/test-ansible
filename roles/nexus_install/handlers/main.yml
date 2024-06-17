@@ -1,6 +1,4 @@
----
-- name: Reload systemd
-  ansible.builtin.systemd:
-    daemon_reload: yes
-    state: restarted
+- name: Restart Nexus
+  systemd:
     name: nexus
+    state: restarted

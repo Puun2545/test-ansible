@@ -3,4 +3,5 @@
   hosts: nexus-server
   become: yes
   roles:
-    - "../roles/nexus_install"
+    - nexus_install
+
