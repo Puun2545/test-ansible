@@ -1,0 +1,17 @@
+- name: show nginx version
+  ansible.builtin.debug:
+    msg: "เวอร์ชันของ nginx: {{ nginx_version.stderr }}"
+  when: nginx_version.rc == 0
+
+- name: Check nginx service status
+  ansible.builtin.systemd:
+    name: nginx
+    state: started"
+  register: nginx_service_check
+  ignore_errors: yes
+
+- name: fail if nginx service is not active
+  ansible.builtin.fail:
+    msg: "Nginx service is not active."
+  when: nginx_service_check.status.ActiveState != "active"
+

@@ -8,5 +8,8 @@
     state: latest
   notify:
     - restart nginx
-  
+
+- name: Run test services
+  include_tasks: test_services.yml
+  when: nginx_restart_triggered
 
