@@ -1,9 +1,9 @@
 ---
-- name: Install Java (required for Nexus)
-  apt:
-    name: openjdk-11-jdk
-    state: present
-  become: yes
+# - name: Install Java (required for Nexus)
+#   apt:
+#     name: openjdk-11-jdk
+#     state: present
+#   become: yes
 
 - name: Create Nexus user
   ansible.builtin.user:
