@@ -1,6 +1,6 @@
 - name: Download Nexus Repository Manager 3
   get_url:
-    url: "https://download.sonatype.com/nexus/3/nexus-3.68.1-02-java11-unix.tar.gz"
+    url: "https://download.sonatype.com/nexus/3/latest-unix.tar.gz"
     dest: /tmp/nexus.tar.gz
 
 - name: Extract Nexus archive
