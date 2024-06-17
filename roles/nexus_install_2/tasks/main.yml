@@ -1,9 +1,9 @@
 ---
-# - name: Install Java (required for Nexus)
-#   apt:
-#     name: openjdk-11-jdk
-#     state: present
-#   become: yes
+- name: Install Java (required for Nexus)
+  apt:
+    name: openjdk-8-jdk
+    state: present
+  become: yes
 
 - name: Create Nexus user
   ansible.builtin.user:
@@ -24,6 +24,7 @@
     src: /tmp/nexus.tar.gz
     dest: /opt/
     extra_opts: [--strip-components=1]
+    remote_src: yes
   become: yes
 
 - name: Change ownership of Nexus directory
@@ -45,4 +46,11 @@
   systemd:
     name: nexus
     enabled: yes
+  become: yes
+
+- name: Set JAVA_HOME environment variable
+  ansible.builtin.lineinfile:
+    path: /etc/environment
+    line: 'JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64'
+    create: yes
   become: yes
