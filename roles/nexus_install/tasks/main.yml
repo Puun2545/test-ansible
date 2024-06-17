@@ -3,11 +3,6 @@
     update_cache: yes
   when: ansible_os_family == "Debian"
 
-- name: Ensure required repositories are added (Debian-based)
-  apt_repository:
-    repo: 'ppa:openjdk-r/ppa'
-  when: ansible_os_family == "Debian"
-
 - name: Ensure Java is installed (Debian-based)
   apt:
     name: openjdk-11-jdk
