@@ -1,0 +1,57 @@
+---
+- name: Change to the directory
+  shell:
+    cmd: "cd /apps/ && ls -alt"
+    executable: /bin/bash
+
+- name: Zip current nexus application folder
+  shell:
+    cmd: "bakup_version=nexus_##CURRENT_VERSION## && zip -r ${bakup_version}.zip nexus/"
+    executable: /bin/bash
+
+- name: Make directory for Nexus latest versions
+  shell:
+    cmd: "mkdir -p /apps/##JIRA_CARD##"
+
+- name: Download Latest nexus version 
+  get_url:
+    url: "https://download.sonatype.com/nexus/3/latest-unix.tar.gz"
+    dest: /apps/##JIRA_CARD##/nexus.tar.gz
+  become: yes
+
+- name: Extract New Nexus Archive
+  become: yes
+  unarchive:
+    src: /apps/##JIRA_CARD##/nexus.tar.gz
+    dest: /apps/##JIRA_CARD##/nexus.tar.gz
+    remote_src: yes
+
+- name: Remove Nexus current version
+  file:
+    path: /apps/nexus
+    state: absent
+
+- name: Move Nexus latest version to Apps repository
+  ansible.builtin.mv:
+    src: /apps/##JIRA_CARD##/nexus-3*
+    dest: /apps/nexus
+
+- name: Set Nexus Ownership
+  become: yes
+  file:
+    path: /apps/nexus
+    owner: appservice
+    group: appservice
+    recurse: yes
+
+- name: Start Nexus Service
+  become: yes
+  systemd:
+    name: nexus
+    state: restarted
+
+- name: Remove working directory
+  become: yes
+  file:
+    path: /apps/##JIRA_CARD##
+    state: absent

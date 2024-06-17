@@ -1,6 +1,6 @@
 ---
 - name: Install Nexus
-  hosts: nexus-server
+  hosts: slave-3
   become: yes
   roles:
     - nexus_install
