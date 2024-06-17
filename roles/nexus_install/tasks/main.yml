@@ -55,7 +55,7 @@
     dest: /etc/systemd/system/nexus.service
 
 - name: Enable and start Nexus service
-  systemd:
+  ansible.builtin.systemd:
     name: nexus
     enabled: yes
     state: started
