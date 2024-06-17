@@ -57,6 +57,6 @@
 - name: Enable and start Nexus service
   ansible.builtin.systemd:
     name: nexus
-    enabled: yes
     state: started
+    enabled: yes
 

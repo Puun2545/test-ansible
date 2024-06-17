@@ -1,0 +1,48 @@
+---
+- name: Install Java (required for Nexus)
+  apt:
+    name: openjdk-11-jdk
+    state: present
+  become: yes
+
+- name: Create Nexus user
+  ansible.builtin.user:
+    name: nexus
+    home: /opt/nexus
+    shell: /bin/bash
+    state: present
+  become: yes
+
+- name: Download Nexus
+  get_url:
+    url: https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+    dest: /tmp/nexus.tar.gz
+  become: yes
+
+- name: Extract Nexus
+  ansible.builtin.unarchive:
+    src: /tmp/nexus.tar.gz
+    dest: /opt/
+    extra_opts: [--strip-components=1]
+  become: yes
+
+- name: Change ownership of Nexus directory
+  ansible.builtin.file:
+    path: /opt/nexus
+    owner: nexus
+    group: nexus
+    recurse: yes
+  become: yes
+
+- name: Configure Nexus to run as a service
+  template:
+    src: nexus.service.j2
+    dest: /etc/systemd/system/nexus.service
+  notify: Start Nexus
+  become: yes
+
+- name: Enable Nexus service
+  systemd:
+    name: nexus
+    enabled: yes
+  become: yes
