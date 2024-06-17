@@ -1,0 +1,6 @@
+---
+- name: Install Nexus
+  hosts: nexus-server
+  become: yes
+  roles:
+    - "../roles/nexus_install"

@@ -3,4 +3,4 @@
   hosts: webservers
   become: yes
   roles:
-    - unsinstall_nginx
+    - "../roles/uninstall_webserver"

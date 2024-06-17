@@ -1,0 +1,28 @@
+- name: Download Nexus Repository Manager 3
+  get_url:
+    url: "https://download.sonatype.com/nexus/3/nexus-3.68.1-02-java11-unix.tar.gz"
+    dest: /tmp/nexus.tar.gz
+
+- name: Extract Nexus archive
+  ansible.builtin.unarchive:
+    src: /tmp/nexus.tar.gz
+    dest: /opt/
+    creates: /opt/nexus-3.x.y-xx  # Adjust version specific directory name
+
+- name: Create symbolic link
+  ansible.builtin.file:
+    src: "/opt/nexus-3.x.y-xx"
+    dest: "/opt/nexus"
+    state: link
+
+- name: Configure Nexus service
+  ansible.builtin.template:
+    src: nexus.service.j2  # Template file for Nexus systemd service
+    dest: /etc/systemd/system/nexus.service
+  notify: Reload systemd
+
+- name: Ensure Nexus service is started and enabled
+  ansible.builtin.service:
+    name: nexus
+    state: started
+    enabled: yes
