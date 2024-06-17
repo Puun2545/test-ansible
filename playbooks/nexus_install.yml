@@ -3,5 +3,5 @@
   hosts: slave-3
   become: yes
   roles:
-    - nexus_install_2
+    - nexus_install
 
