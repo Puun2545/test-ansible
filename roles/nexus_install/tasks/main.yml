@@ -1,8 +1,3 @@
-- name: Update the package list (Debian-based)
-  apt:
-    update_cache: yes
-  when: ansible_os_family == "Debian"
-
 - name: Ensure Java is installed (Debian-based)
   apt:
     name: openjdk-17-jdk
@@ -64,3 +59,16 @@
     name: nexus
     enabled: yes
     state: started
+
+- name: Wait for Nexus to start
+  uri:
+    url: http://localhost:8081
+    return_content: no
+    status_code: 200
+    timeout: 60
+  register: nexus_status
+  until: nexus_status.status == 200
+  retries: 10
+  delay: 10
+  ignore_errors: yes
+
