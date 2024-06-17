@@ -1,4 +1,4 @@
 - hosts: webservers
   become: yes
   roles:
-    - ../roles/install_nginx
+    - "../roles/nginx_webserver"
