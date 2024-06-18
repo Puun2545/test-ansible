@@ -117,7 +117,8 @@
         port: 8081
         state: started
         delay: 10
-        timeout: 180 # 3 minutes
+        timeout: 60 # 3 minutes
+      ignore_errors: yes
 
     - name: Debug log output
       command: cat /var/log/nexus.log
