@@ -1,6 +1,6 @@
 ---
 - name: Install Nexus Repository Manager 3
-  hosts: slave-3
+  hosts: slave-2
   become: yes
 
   vars:
@@ -12,7 +12,7 @@
     nexus_user: "nexus"
 
   tasks:
-    - name: ติดตั้ง dependencies
+    - name: Install dependencies
       apt:
         name: 
           - wget
@@ -20,45 +20,45 @@
         state: present
         update_cache: yes
 
-    - name: สร้างผู้ใช้ nexus
+    - name: Create nexus user
       user:
         name: "{{ nexus_user }}"
         shell: /bin/bash
 
-    - name: ดาวน์โหลด Nexus Repository Manager
+    - name: Download Nexus Repository Manager
       get_url:
         url: "{{ nexus_download_url }}"
         dest: "/tmp/nexus-{{ nexus_version }}-unix.tar.gz"
 
-    - name: สร้างไดเรกทอรีสำหรับติดตั้ง Nexus
+    - name: Create Nexus install directory
       file:
         path: "{{ nexus_install_dir }}"
         state: directory
         owner: "{{ nexus_user }}"
         group: "{{ nexus_user }}"
 
-    - name: แตกไฟล์ Nexus Repository Manager
+    - name: Extract Nexus Repository Manager
       unarchive:
         src: "/tmp/nexus-{{ nexus_version }}-unix.tar.gz"
         dest: "{{ nexus_install_dir }}"
         remote_src: yes
         creates: "{{ nexus_install_dir }}/nexus-{{ nexus_version }}"
 
-    - name: สร้าง symbolic link ไปที่ nexus
+    - name: Create a symbolic link to nexus
       file:
         src: "{{ nexus_install_dir }}/nexus-{{ nexus_version }}"
         dest: "{{ nexus_install_dir }}/nexus"
         state: link
         force: yes
 
-    - name: สร้างไดเรกทอรีสำหรับข้อมูลของ Nexus
+    - name: Create Nexus data directory
       file:
         path: "{{ nexus_data_dir }}"
         state: directory
         owner: "{{ nexus_user }}"
         group: "{{ nexus_user }}"
 
-    - name: ตั้งค่าการอนุญาตบนไดเรกทอรีของ Nexus
+    - name: Set permissions on Nexus directories
       file:
         path: "{{ item }}"
         state: directory
@@ -69,57 +69,44 @@
         - "{{ nexus_install_dir }}/nexus"
         - "{{ nexus_data_dir }}"
 
-    - name: ตั้งค่าให้ Nexus ทำงานในฐานะผู้ใช้ nexus
+    - name: Configure Nexus to run as nexus user
       lineinfile:
         path: "{{ nexus_install_dir }}/nexus/bin/nexus.vmoptions"
         line: "-Djava.io.tmpdir={{ nexus_data_dir }}"
         create: yes
 
-    - name: ตั้งค่าให้ Nexus ใช้ Java 17
+    - name: Configure Nexus to use Java 17
       lineinfile:
         path: "{{ nexus_install_dir }}/nexus/bin/nexus"
         regexp: '^#INSTALL4J_JAVA_HOME_OVERRIDE='
         line: 'INSTALL4J_JAVA_HOME_OVERRIDE=/usr/lib/jvm/java-{{ java_version }}-openjdk-amd64'
         insertafter: '^#INSTALL4J_JAVA_HOME_OVERRIDE='
 
-    - name: สร้างไฟล์บริการ Nexus สำหรับ SysVinit
+    - name: Create Nexus service file
       copy:
-        dest: /etc/init.d/nexus
+        dest: /etc/systemd/system/nexus.service
         content: |
-          #!/bin/bash
-          # Nexus service script
-          # chkconfig: 345 99 10
-          # description: Nexus service
+          [Unit]
+          Description=nexus service
+          After=network.target
 
-          case "$1" in
-          start)
-            echo "Starting Nexus..."
-            su - {{ nexus_user }} -c "{{ nexus_install_dir }}/nexus/bin/nexus start"
-            ;;
-          stop)
-            echo "Stopping Nexus..."
-            su - {{ nexus_user }} -c "{{ nexus_install_dir }}/nexus/bin/nexus stop"
-            ;;
-          restart)
-            echo "Restarting Nexus..."
-            su - {{ nexus_user }} -c "{{ nexus_install_dir }}/nexus/bin/nexus stop"
-            su - {{ nexus_user }} -c "{{ nexus_install_dir }}/nexus/bin/nexus start"
-            ;;
-          status)
-            su - {{ nexus_user }} -c "{{ nexus_install_dir }}/nexus/bin/nexus status"
-            ;;
-          *)
-            echo "Usage: $0 {start|stop|restart|status}"
-            exit 1
-          esac
+          [Service]
+          Type=forking
+          LimitNOFILE=65536
+          ExecStart={{ nexus_install_dir }}/nexus/bin/nexus start
+          ExecStop={{ nexus_install_dir }}/nexus/bin/nexus stop
+          User={{ nexus_user }}
+          Restart=on-abort
 
-          exit 0
-      mode: '0755'
+          [Install]
+          WantedBy=multi-user.target
 
-    - name: เปิดใช้งานบริการ Nexus ด้วย SysVinit
-      command: update-rc.d nexus defaults
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
 
-    - name: เริ่มบริการ Nexus ด้วย SysVinit
-      service:
+    - name: Enable and start Nexus service
+      systemd:
         name: nexus
+        enabled: yes
         state: started
