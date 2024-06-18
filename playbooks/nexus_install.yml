@@ -107,15 +107,24 @@
           To run Nexus Repository Manager, execute the following command:
           /usr/local/bin/run_nexus.sh
 
-    - name: Start Nexus Repository Manager
-      command: /usr/local/bin/run_nexus.sh &
+- name: Start Nexus service
+      shell: |
+        nohup /usr/local/bin/run_nexus.sh > /var/log/nexus.log 2>&1 &
       async: 60
       poll: 0
 
-    - name: Wait for Nexus to start\
+    - name: Wait for Nexus to start
       wait_for:
         port: 8081
-        delay: 10
-        timeout: 300
         state: started
+        delay: 10
+        timeout: 180 # 3 minutes
+
+    - name: Debug log output
+      command: cat /var/log/nexus.log
+      register: nexus_log
+
+    - name: Show Nexus log
+      debug:
+        msg: "{{ nexus_log.stdout }}"
 
