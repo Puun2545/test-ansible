@@ -107,7 +107,7 @@
           To run Nexus Repository Manager, execute the following command:
           /usr/local/bin/run_nexus.sh
 
-- name: Start Nexus service
+    - name: Start Nexus service
       shell: "nohup /usr/local/bin/run_nexus.sh > /var/log/nexus.log 2>&1 &"
       async: 60
       poll: 0
