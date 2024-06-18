@@ -1,7 +1,112 @@
 ---
-- name: Install Nexus
+- name: Install Nexus Repository Manager 3
   hosts: slave-3
   become: yes
-  roles:
-    - nexus_install
 
+  vars:
+    nexus_version: "3.46.0-01"
+    nexus_download_url: "https://download.sonatype.com/nexus/3/nexus-{{ nexus_version }}-unix.tar.gz"
+    nexus_install_dir: "/opt/nexus"
+    nexus_data_dir: "/opt/sonatype-work"
+    java_version: "17"
+    nexus_user: "nexus"
+
+  tasks:
+    - name: Install dependencies
+      apt:
+        name: 
+          - wget
+          - openjdk-{{ java_version }}-jdk
+        state: present
+        update_cache: yes
+
+    - name: Create nexus user
+      user:
+        name: "{{ nexus_user }}"
+        shell: /bin/bash
+
+    - name: Download Nexus Repository Manager
+      get_url:
+        url: "{{ nexus_download_url }}"
+        dest: "/tmp/nexus-{{ nexus_version }}-unix.tar.gz"
+
+    - name: Create Nexus install directory
+      file:
+        path: "{{ nexus_install_dir }}"
+        state: directory
+        owner: "{{ nexus_user }}"
+        group: "{{ nexus_user }}"
+
+    - name: Extract Nexus Repository Manager
+      unarchive:
+        src: "/tmp/nexus-{{ nexus_version }}-unix.tar.gz"
+        dest: "{{ nexus_install_dir }}"
+        remote_src: yes
+        creates: "{{ nexus_install_dir }}/nexus-{{ nexus_version }}"
+
+    - name: Create a symbolic link to nexus
+      file:
+        src: "{{ nexus_install_dir }}/nexus-{{ nexus_version }}"
+        dest: "{{ nexus_install_dir }}/nexus"
+        state: link
+        force: yes
+
+    - name: Create Nexus data directory
+      file:
+        path: "{{ nexus_data_dir }}"
+        state: directory
+        owner: "{{ nexus_user }}"
+        group: "{{ nexus_user }}"
+
+    - name: Set permissions on Nexus directories
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ nexus_user }}"
+        group: "{{ nexus_user }}"
+        recurse: yes
+      with_items:
+        - "{{ nexus_install_dir }}/nexus"
+        - "{{ nexus_data_dir }}"
+
+    - name: Configure Nexus to run as nexus user
+      lineinfile:
+        path: "{{ nexus_install_dir }}/nexus/bin/nexus.vmoptions"
+        line: "-Djava.io.tmpdir={{ nexus_data_dir }}"
+        create: yes
+
+    - name: Configure Nexus to use Java 17
+      lineinfile:
+        path: "{{ nexus_install_dir }}/nexus/bin/nexus"
+        regexp: '^#INSTALL4J_JAVA_HOME_OVERRIDE='
+        line: 'INSTALL4J_JAVA_HOME_OVERRIDE=/usr/lib/jvm/java-{{ java_version }}-openjdk-amd64'
+        insertafter: '^#INSTALL4J_JAVA_HOME_OVERRIDE='
+
+    - name: Create Nexus service file
+      copy:
+        dest: /etc/systemd/system/nexus.service
+        content: |
+          [Unit]
+          Description=nexus service
+          After=network.target
+
+          [Service]
+          Type=forking
+          LimitNOFILE=65536
+          ExecStart={{ nexus_install_dir }}/nexus/bin/nexus start
+          ExecStop={{ nexus_install_dir }}/nexus/bin/nexus stop
+          User={{ nexus_user }}
+          Restart=on-abort
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    - name: Enable and start Nexus service
+      systemd:
+        name: nexus
+        enabled: yes
+        state: started
