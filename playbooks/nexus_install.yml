@@ -104,6 +104,7 @@
     - name: Reload systemd daemon
       systemd:
         daemon_reload: yes
+      ignore_errors: yes
 
     - name: Enable and start Nexus service
       systemd:
