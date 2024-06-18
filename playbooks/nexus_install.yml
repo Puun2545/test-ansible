@@ -4,11 +4,11 @@
   become: yes
 
   vars:
-    nexus_version: "3.46.0-01"
-    nexus_download_url: "https://download.sonatype.com/nexus/3/nexus-{{ nexus_version }}-unix.tar.gz"
+    nexus_version: "3.69.0-02"
+    java_version: "17"
+    nexus_download_url: "https://download.sonatype.com/nexus/3/nexus-{{ nexus_version }}-java{{ java_version }}-unix.tar.gz"
     nexus_install_dir: "/opt/nexus"
     nexus_data_dir: "/opt/sonatype-work"
-    java_version: "17"
     nexus_user: "nexus"
 
   tasks:
