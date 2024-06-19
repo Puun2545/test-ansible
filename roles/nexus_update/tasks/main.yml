@@ -1,45 +1,45 @@
 ---
-- name: Change to the directory
+- name: Change Directory to Nexus Application/
   shell:
     cmd: "cd /apps/ && ls -alt"
     executable: /bin/bash
 
-- name: Zip current nexus application folder
+- name: Zip Nexus current version for backup
   shell:
-    cmd: "bakup_version=nexus_##CURRENT_VERSION## && zip -r ${bakup_version}.zip nexus/"
+    cmd: "bakup_version=nexus_{{ current_version }} && zip -r ${bakup_version}.zip nexus/"
     executable: /bin/bash
 
-- name: Make directory for Nexus latest versions
+- name: Create New Nexus App Directory
   shell:
-    cmd: "mkdir -p /apps/##JIRA_CARD##"
+    cmd: "mkdir -p {{ nexus_install_dir }}" # What is ##JIRA_CARD##?
 
 - name: Download Latest nexus version 
   get_url:
     url: "https://download.sonatype.com/nexus/3/latest-unix.tar.gz"
-    dest: /apps/##JIRA_CARD##/nexus.tar.gz
+    dest: "{{ nexus_install_dir }}/nexus.tar.gz"
   become: yes
 
 - name: Extract New Nexus Archive
   become: yes
   unarchive:
-    src: /apps/##JIRA_CARD##/nexus.tar.gz
-    dest: /apps/##JIRA_CARD##/nexus.tar.gz
+    src: "{{ nexus_install_dir }}/nexus.tar.gz"
+    dest: "{{ nexus_install_dir }}/nexus.tar.gz"
     remote_src: yes
 
 - name: Remove Nexus current version
   file:
-    path: /apps/nexus
+    path: "{{ nexus_apps_dir }}"
     state: absent
 
 - name: Move Nexus latest version to Apps repository
   ansible.builtin.mv:
-    src: /apps/##JIRA_CARD##/nexus-3*
-    dest: /apps/nexus
+    src: "{{ nexus_install_dir }}/nexus-3*" # if its stll >= 3.0 version
+    dest: "{{ nexus_apps_dir }}"
 
 - name: Set Nexus Ownership
   become: yes
   file:
-    path: /apps/nexus
+    path: "{{ nexus_apps_dir }}"
     owner: appservice
     group: appservice
     recurse: yes
@@ -53,5 +53,5 @@
 - name: Remove working directory
   become: yes
   file:
-    path: /apps/##JIRA_CARD##
+    path: "{{ nexus_install_dir }}"
     state: absent

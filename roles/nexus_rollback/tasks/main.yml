@@ -1,0 +1,32 @@
+---
+- name: Stop Nexus Service
+  become: yes
+  systemd:
+    name: nexus
+    state: stopped
+
+- name: Remove current Nexus installation
+  file:
+    path: "{{ nexus_apps_dir }}"
+    state: absent
+    become: yes
+
+- name: Unzip the backup of the previous Nexus version
+  shell:
+    cmd: "unzip {{ backup_dir }}/nexus_{{ current_version }}.zip -d {{ nexus_apps_dir }}"
+    executable: /bin/bash
+  become: yes
+
+- name: Set Nexus Ownership
+  become: yes
+  file:
+    path: "{{ nexus_apps_dir }}"
+    owner: appservice
+    group: appservice
+    recurse: yes
+
+- name: Start Nexus Service
+  become: yes
+  systemd:
+    name: nexus
+    state: started

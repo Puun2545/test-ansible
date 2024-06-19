@@ -1,0 +1,5 @@
+- name: Roll Back Nexus
+  hosts: nexus
+  become: yes
+  roles:
+    - "../roles/nexus_rollback"

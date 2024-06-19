@@ -1,6 +1,7 @@
 - name: Install Nexus Repository Manager 3
-  hosts: slave-2
+  hosts: nexus_server
   become: yes
+  become_user: nexus
 
   vars:
     nexus_version: "3.69.0-02"

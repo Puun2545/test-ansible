@@ -1,0 +1,8 @@
+---
+- name: Upgarde Nexus
+  hosts: nexus_server
+  become: yes
+  become_user: nexus
+  vars: 
+  roles:
+    - "../roles/nexus_update"
