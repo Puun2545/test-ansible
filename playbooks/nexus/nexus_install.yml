@@ -1,0 +1,8 @@
+- name: Install Nexus Repository Manager 3
+  hosts: nexus_server
+  become: yes
+  become_user: nexus
+
+  roles:
+    - "../roles/nexus/nexus_install"
+  

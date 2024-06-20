@@ -13,7 +13,7 @@
 
 - name: Unzip the backup of the previous Nexus version
   shell:
-    cmd: "unzip {{ backup_dir }}/nexus_{{ current_version }}.zip -d {{ nexus_apps_dir }}"
+    cmd: "unzip /apps/nexus_{{ current_version }}.zip -d {{ nexus_apps_dir }}"
     executable: /bin/bash
   become: yes
 
