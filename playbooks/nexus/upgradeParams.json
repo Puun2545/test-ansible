@@ -1,5 +1,6 @@
 {
     "current_version": "1.0.0",
-    "jira_card_id": "https://jira.4finance.net/browse/PL-1234"
+    "jira_card_id": "https://jira.4finance.net/browse/PL-1234",
+    "testparam": "testvalue"
 }
 
