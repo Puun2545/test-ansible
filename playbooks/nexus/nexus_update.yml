@@ -1,8 +1,8 @@
 ---
 - name: Upgarde Nexus
-  hosts: nexus_server
-  become: yes
+  hosts: ##nexus_server##
   become_user: nexus
-  vars: 
+  vars_files:
+    - upgradeParams.json
   roles:
     - "../roles/nexus/nexus_update"

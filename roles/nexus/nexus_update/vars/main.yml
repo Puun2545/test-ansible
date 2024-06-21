@@ -1,5 +1,0 @@
----
-nexus_current_version: "3.21.1-01" # This is the version of Nexus that is currently installed
-jira_card: "https://jira.example.com/browse/DEV-1234" # This is the JIRA card that is associated with this task  # What is ##JIRA_CARD##?
-nexus_install_temp_dir: "/apps/{{ jira_card }}" # This is the directory where Nexus will be installed
-nexus_apps_dir: "/apps/nexus"

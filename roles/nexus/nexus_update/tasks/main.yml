@@ -1,45 +1,43 @@
 ---
-- name: Change Directory to Nexus Application/
+- name: Change to the directory # เปลี่ยนไปที่ไดเร็กทอรี่ /apps/ และแสดงไฟล์ทั้งหมด
   shell:
     cmd: "cd /apps/ && ls -alt"
     executable: /bin/bash
 
-- name: Zip Nexus current version for backup
+- name: Zip current nexus application folder # ทำการ zip เพื่อ bakup ไฟล์ทั้งหมดในไดเร็กทอรี่ /apps/nexus/ และเก็บไว้ในไดเร็กทอรี่ /apps/ 
   shell:
     cmd: "bakup_version=nexus_{{ current_version }} && zip -r ${bakup_version}.zip nexus/"
     executable: /bin/bash
 
-- name: Create New Nexus App Directory
+- name: Make directory for Nexus latest versions # สร้างไดเร็กทอรี่ /apps/{{ jira_card_id }} สำหรับเก็บไฟล์ที่ดาวน์โหลด
   shell:
-    cmd: "mkdir -p {{ nexus_install_dir }}" # What is ##JIRA_CARD##?
+    cmd: "mkdir -p /apps/{{ jira_card }}"
 
 - name: Download Latest nexus version 
   get_url:
-    url: "https://download.sonatype.com/nexus/3/latest-unix.tar.gz"
-    dest: "{{ nexus_install_dir }}/nexus.tar.gz"
+    url: "https://download.sonatype.com/nexus/3/latest-unix.tar.gz" 
+    dest: /apps/{{ jira_card }}/nexus.tar.gz
   become: yes
 
 - name: Extract New Nexus Archive
   become: yes
   unarchive:
-    src: "{{ nexus_install_dir }}/nexus.tar.gz"
-    dest: "{{ nexus_install_dir }}/nexus.tar.gz"
+    src: /apps/{{ jira_card }}/nexus.tar.gz
+    dest: /apps/{{ jira_card }}/nexus
     remote_src: yes
 
 - name: Remove Nexus current version
   file:
-    path: "{{ nexus_apps_dir }}"
+    path: /apps/nexus
     state: absent
 
 - name: Move Nexus latest version to Apps repository
-  ansible.builtin.mv:
-    src: "{{ nexus_install_dir }}/nexus-3*" # if its stll >= 3.0 version
-    dest: "{{ nexus_apps_dir }}"
+  command: mv /apps/{{ jira_card }}/nexus-3* /apps/nexus
 
 - name: Set Nexus Ownership
   become: yes
   file:
-    path: "{{ nexus_apps_dir }}"
+    path: /apps/nexus
     owner: appservice
     group: appservice
     recurse: yes
@@ -53,5 +51,5 @@
 - name: Remove working directory
   become: yes
   file:
-    path: "{{ nexus_install_dir }}"
+    path: /apps/{{ jira_card }}
     state: absent
