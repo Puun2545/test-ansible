@@ -1,19 +1,7 @@
-- name: Ensure Java is installed (Debian-based)
-  apt:
-    name: openjdk-17-jdk
-    state: present
-  when: ansible_os_family == "Debian"
-
-- name: Ensure Java is installed (RedHat-based)
-  yum:
-    name: java-17-openjdk
-    state: present
-  when: ansible_os_family == "RedHat"
-
 - name: Create nexus user
   user:
     name: nexus
-    home: /opt/nexus
+    home: /apps/nexus
     shell: /bin/bash
     create_home: yes
 
@@ -24,18 +12,19 @@
     owner: nexus
     group: nexus
   with_items:
-    - /opt/nexus
-    - /opt/sonatype-work
+    - /apps/nexus
+    - /apps/sonatype-work
 
 - name: Download Nexus
   get_url:
     url: "https://download.sonatype.com/nexus/3/latest-unix.tar.gz"
-    dest: /tmp/nexus.tar.gz
+    dest: /apps/tmp/nexus.tar.gz
 
 - name: Extract Nexus
+  become: yes
   unarchive:
-    src: /tmp/nexus.tar.gz
-    dest: /opt/nexus
+    src: /apps/tmp/nexus.tar.gz
+    dest: /apps/nexus
     remote_src: yes
     extra_opts:
       - --strip-components=1
@@ -43,7 +32,7 @@
 
 - name: Change ownership of nexus directory
   file:
-    path: /opt/nexus
+    path: /apps/nexus
     state: directory
     owner: nexus
     group: nexus
@@ -54,9 +43,15 @@
     src: nexus.service.j2
     dest: /etc/systemd/system/nexus.service
 
-- name: Enable and start Nexus service
-  ansible.builtin.systemd:
+- name: Start Nexus Service
+  become: yes
+  systemd:
     name: nexus
-    state: started
-    enabled: yes
+    state: restarted
+
+- name: Remove working directory
+  become: yes
+  file:
+    path: /apps/{{ jira_card }}
+    state: absent
 

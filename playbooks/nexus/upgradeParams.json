@@ -1,6 +1,25 @@
 {
-    "current_version": "1.0.0",
-    "jira_card_id": "https://jira.4finance.net/browse/PL-1234",
-    "testparam": "testvalue"
+    "parameterDefinitions": [
+        {
+            "name": "NEXUS_HOSTS",
+            "type": "StringParameterDefinition",
+            "description": "Enter the Nexus Repository Manager hosts",
+            "defaultValue": "unknown",
+            "trim": true
+        },
+        {
+            "name": "NEXUS_CURRENT_VERSION",
+            "type": "StringParameterDefinition",
+            "description": "Enter the current version of Nexus Repository Manager",
+            "defaultValue": "unknown",
+            "trim": true
+        },
+        {
+            "name": "JIRA_CARD_ID",
+            "type": "StringParameterDefinition",
+            "description": "Enter the JIRA card ID",
+            "defaultValue": "unknown",
+            "trim": true
+        }
+    ]
 }
-

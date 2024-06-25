@@ -1,15 +1,15 @@
 ---
-- name: Change to the directory # เปลี่ยนไปที่ไดเร็กทอรี่ /apps/ และแสดงไฟล์ทั้งหมด
+- name: Change to the directory
   shell:
     cmd: "cd /apps/ && ls -alt"
     executable: /bin/bash
 
-- name: Zip current nexus application folder # ทำการ zip เพื่อ bakup ไฟล์ทั้งหมดในไดเร็กทอรี่ /apps/nexus/ และเก็บไว้ในไดเร็กทอรี่ /apps/ 
+- name: Zip current nexus application folder
   shell:
     cmd: "bakup_version=nexus_{{ current_version }} && zip -r ${bakup_version}.zip nexus/"
     executable: /bin/bash
 
-- name: Make directory for Nexus latest versions # สร้างไดเร็กทอรี่ /apps/{{ jira_card_id }} สำหรับเก็บไฟล์ที่ดาวน์โหลด
+- name: Make directory for Nexus latest versions
   shell:
     cmd: "mkdir -p /apps/{{ jira_card }}"
 
