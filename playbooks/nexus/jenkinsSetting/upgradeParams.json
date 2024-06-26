@@ -1,13 +1,6 @@
 {
     "parameterDefinitions": [
         {
-            "name": "NEXUS_HOSTS",
-            "type": "StringParameterDefinition",
-            "description": "Enter the Nexus Repository Manager hosts",
-            "defaultValue": "unknown",
-            "trim": true
-        },
-        {
             "name": "NEXUS_CURRENT_VERSION",
             "type": "StringParameterDefinition",
             "description": "Enter the current version of Nexus Repository Manager",
@@ -15,7 +8,7 @@
             "trim": true
         },
         {
-            "name": "JIRA_CARD_ID",
+            "name": "NEXUS_JIRA_CARD",
             "type": "StringParameterDefinition",
             "description": "Enter the JIRA card ID",
             "defaultValue": "unknown",
