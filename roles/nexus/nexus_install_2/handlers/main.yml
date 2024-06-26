@@ -1,7 +1,0 @@
----
-- name: Start Nexus
-  systemd:
-    name: nexus
-    state: started
-    enabled: yes
-  become: yes

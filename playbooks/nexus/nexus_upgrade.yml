@@ -3,6 +3,6 @@
   hosts: ##nexus_server##
   become_user: nexus
   vars_files:
-    - "./vars/upgradeVars.yml"
+    - nexus_vars.yml
   roles:
     - "../roles/nexus/nexus_upgrade"
