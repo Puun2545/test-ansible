@@ -2,8 +2,8 @@
   file:
     path: /apps/nexus
     state: directory
-    owner: appservice
-    group: appservice
+    # owner: nexus
+    # group: appservice
 
 - name: Download Latest Nexus version 
   get_url:
@@ -19,12 +19,12 @@
 - name: Move extracted Nexus files
   command: mv /apps/nexus/nexus-3*/* /apps/nexus/
 
-- name: Set Nexus Ownership
-  file:
-    path: /apps/nexus
-    owner: appservice
-    group: appservice
-    recurse: yes
+# - name: Set Nexus Ownership
+#   file:
+#     path: /apps/nexus
+#     owner: nexus
+#     group: appservice
+#     recurse: yes
 
 - name: Create Nexus systemd service file
   copy:

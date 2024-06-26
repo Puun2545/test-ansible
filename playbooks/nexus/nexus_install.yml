@@ -1,5 +1,6 @@
 - name: Install Nexus Repository Manager 3
   hosts: aella-xplatform-mpoc-poc-ansible-dev-ec2
+  # become_user: nexus
   become: yes
   roles:
     - "../roles/nexus/nexus_install"
