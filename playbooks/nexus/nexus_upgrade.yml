@@ -1,6 +1,6 @@
 ---
 - name: Upgarde Nexus
-  hosts: ##nexus_server##
+  hosts: aella-xplatform-mpoc-poc-ansible-dev-ec2
   become_user: nexus
   vars_files:
     - nexus_vars.yml

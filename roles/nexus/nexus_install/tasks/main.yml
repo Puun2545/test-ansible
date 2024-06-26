@@ -1,57 +1,55 @@
-- name: Create nexus user
-  user:
-    name: nexus
-    home: /apps/nexus
-    shell: /bin/bash
-    create_home: yes
-
-- name: Create directories
-  file:
-    path: "{{ item }}"
-    state: directory
-    owner: nexus
-    group: nexus
-  with_items:
-    - /apps/nexus
-    - /apps/sonatype-work
-
-- name: Download Nexus
-  get_url:
-    url: "https://download.sonatype.com/nexus/3/latest-unix.tar.gz"
-    dest: /apps/tmp/nexus.tar.gz
-
-- name: Extract Nexus
-  become: yes
-  unarchive:
-    src: /apps/tmp/nexus.tar.gz
-    dest: /apps/nexus
-    remote_src: yes
-    extra_opts:
-      - --strip-components=1
-  notify: Restart Nexus
-
-- name: Change ownership of nexus directory
+- name: Create directory for Nexus installation
   file:
     path: /apps/nexus
     state: directory
-    owner: nexus
-    group: nexus
+    owner: appservice
+    group: appservice
+
+- name: Download Latest Nexus version 
+  get_url:
+    url: "https://download.sonatype.com/nexus/3/latest-unix.tar.gz" 
+    dest: /apps/nexus/nexus.tar.gz
+
+- name: Extract Nexus Archive
+  unarchive:
+    src: /apps/nexus/nexus.tar.gz
+    dest: /apps/nexus
+    remote_src: yes
+
+- name: Move extracted Nexus files
+  command: mv /apps/nexus/nexus-3*/* /apps/nexus/
+
+- name: Set Nexus Ownership
+  file:
+    path: /apps/nexus
+    owner: appservice
+    group: appservice
     recurse: yes
 
-- name: Create nexus.service systemd file
-  template:
-    src: nexus.service.j2
+- name: Create Nexus systemd service file
+  copy:
     dest: /etc/systemd/system/nexus.service
+    content: |
+      [Unit]
+      Description=nexus service
+      After=network.target
+
+      [Service]
+      Type=forking
+      ExecStart=/apps/nexus/bin/nexus start
+      ExecStop=/apps/nexus/bin/nexus stop
+      User=appservice
+      Restart=on-abort
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
 
 - name: Start Nexus Service
-  become: yes
   systemd:
     name: nexus
-    state: restarted
-
-- name: Remove working directory
-  become: yes
-  file:
-    path: /apps/{{ jira_card }}
-    state: absent
-
+    state: started
+    enabled: yes

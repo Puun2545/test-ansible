@@ -1,4 +1,0 @@
-- name: Restart Nexus
-  systemd:
-    name: nexus
-    state: restarted
