@@ -9,10 +9,8 @@
         name: '*'
         state: latest
 
-    - name: Install Java (required for Nexus)
-      yum:
-        name: java-11-openjdk
-        state: present
+    - name: Enable the Amazon Linux extras repository for Java 11
+      command: sudo amazon-linux-extras install java-openjdk11 -y
 
     - name: Create Nexus user
       user:
@@ -43,10 +41,15 @@
 
     - name: Create Nexus data directory
       file:
-        path: /apps/sonatype-work
+        path: /opt/sonatype-work
         state: directory
         owner: nexus
         group: nexus
+
+    - name: Set JAVA_HOME in Nexus configuration
+      lineinfile:
+        path: /apps/nexus/nexus-3.*/bin/nexus.rc
+        line: 'export JAVA_HOME=/usr/lib/jvm/java-11-openjdk'
 
     - name: Configure Nexus as a service
       copy:
@@ -73,12 +76,16 @@
     - name: Reload systemd to apply Nexus service
       command: systemctl daemon-reload
 
-    - name: Enable and start Nexus service
+    - name: Start Nexus service
       systemd:
         name: nexus
         enabled: yes
         state: started
 
-  # roles:
-  #   - "../roles/nexus/nexus_install"
+    - name: Check Nexus service status
+      command: systemctl status nexus.service
+      register: nexus_status
 
+    - name: Debug Nexus service status
+      debug:
+        var: nexus_status.stdout_lines
