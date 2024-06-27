@@ -34,7 +34,6 @@
         src: /tmp/nexus.tar.gz
         dest: /apps/nexus
         remote_src: yes
-        creates: /apps/nexus/nexus-3.*
 
     - name: Set Nexus ownership
       command: chown -R nexus:nexus /apps/nexus
@@ -46,10 +45,18 @@
         owner: nexus
         group: nexus
 
+    - name: Find the extracted Nexus directory
+      find:
+        paths: /apps/nexus/
+        patterns: 'nexus-*'
+        use_regex: yes
+      register: nexus_dir
+
     - name: Set JAVA_HOME in Nexus configuration
       lineinfile:
-        path: /apps/nexus/nexus-3.*/bin/nexus.rc
+        path: "{{ item.path }}/bin/nexus.rc"
         line: 'export JAVA_HOME=/usr/lib/jvm/java-11-openjdk'
+      with_items: "{{ nexus_dir.files }}"
 
     - name: Configure Nexus as a service
       copy:
@@ -61,8 +68,8 @@
           [Service]
           Type=forking
           LimitNOFILE=65536
-          ExecStart=/apps/nexus/nexus-3.*/bin/nexus start
-          ExecStop=/apps/nexus/nexus-3.*/bin/nexus stop
+          ExecStart={{ item.path }}/bin/nexus start
+          ExecStop={{ item.path }}/bin/nexus stop
           User=nexus
           Restart=on-abort
 
@@ -72,6 +79,7 @@
         owner: root
         group: root
         mode: '0644'
+      with_items: "{{ nexus_dir.files }}"
 
     - name: Reload systemd to apply Nexus service
       command: systemctl daemon-reload
