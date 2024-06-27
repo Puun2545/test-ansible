@@ -1,7 +1,84 @@
-- name: Install Nexus Repository Manager 3
+---
+- name: Install Sonatype Nexus
   hosts: aella-xplatform-mpoc-poc-ansible-dev-ec2
-  # become_user: nexus
   become: yes
-  roles:
-    - "../roles/nexus/nexus_install"
+
+  tasks:
+    - name: Update YUM package manager repositories
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Install Java (required for Nexus)
+      yum:
+        name: java-11-openjdk
+        state: present
+
+    - name: Create Nexus user
+      user:
+        name: nexus
+        shell: /bin/bash
+
+    - name: Download Nexus
+      get_url:
+        url: https://download.sonatype.com/nexus/3/latest-unix.tar.gz
+        dest: /tmp/nexus.tar.gz
+
+    - name: Create directory for Nexus
+      file:
+        path: /apps/nexus
+        state: directory
+        owner: nexus
+        group: nexus
+
+    - name: Extract Nexus
+      unarchive:
+        src: /tmp/nexus.tar.gz
+        dest: /apps/nexus
+        remote_src: yes
+        creates: /apps/nexus/nexus-3.*
+
+    - name: Set Nexus ownership
+      command: chown -R nexus:nexus /apps/nexus
+
+    - name: Create Nexus data directory
+      file:
+        path: /apps/sonatype-work
+        state: directory
+        owner: nexus
+        group: nexus
+
+    - name: Configure Nexus as a service
+      copy:
+        content: |
+          [Unit]
+          Description=nexus service
+          After=network.target
+
+          [Service]
+          Type=forking
+          LimitNOFILE=65536
+          ExecStart=/apps/nexus/nexus-3.*/bin/nexus start
+          ExecStop=/apps/nexus/nexus-3.*/bin/nexus stop
+          User=nexus
+          Restart=on-abort
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/nexus.service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Reload systemd to apply Nexus service
+      command: systemctl daemon-reload
+
+    - name: Enable and start Nexus service
+      systemd:
+        name: nexus
+        enabled: yes
+        state: started
+
+  # roles:
+  #   - "../roles/nexus/nexus_install"
 
