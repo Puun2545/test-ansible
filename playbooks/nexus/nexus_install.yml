@@ -64,6 +64,9 @@
 
           [Install]
           WantedBy=multi-user.target
+    
+    - name: Reload systemd daemon
+      command: systemctl daemon-reload
 
     - name: Enable and start Nexus service
       systemd:
