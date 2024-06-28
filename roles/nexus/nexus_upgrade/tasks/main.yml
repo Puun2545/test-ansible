@@ -1,29 +1,29 @@
 ---
 - name: Change to the directory
-  shell:
-    cmd: "cd /apps/ && ls -alt"
+  shell: "cd /apps/ && ls -alt"
+  args:
     executable: /bin/bash
 
 - name: Zip current nexus application folder
-  shell:
-    cmd: "bakup_version=nexus_{{ current_version }} && zip -r ${bakup_version}.zip nexus/"
+  shell: "bakup_version=nexus_{{ current_version }} && zip -r ${bakup_version}.zip nexus/"
+  args:
+    chdir: /apps
     executable: /bin/bash
 
 - name: Make directory for Nexus latest versions
-  shell:
-    cmd: "mkdir -p /apps/{{ jira_card }}"
+  file:
+    path: /apps/{{ jira_card }}
+    state: directory
 
 - name: Download Latest nexus version 
   get_url:
     url: "https://download.sonatype.com/nexus/3/latest-unix.tar.gz" 
     dest: /apps/{{ jira_card }}/nexus.tar.gz
-  become: yes
 
 - name: Extract New Nexus Archive
-  become: yes
   unarchive:
     src: /apps/{{ jira_card }}/nexus.tar.gz
-    dest: /apps/{{ jira_card }}/nexus
+    dest: /apps/{{ jira_card }}
     remote_src: yes
 
 - name: Remove Nexus current version
@@ -35,21 +35,21 @@
   command: mv /apps/{{ jira_card }}/nexus-3* /apps/nexus
 
 - name: Set Nexus Ownership
-  become: yes
   file:
     path: /apps/nexus
-    owner: appservice
-    group: appservice
+    owner: nexus
+    group: nexus
     recurse: yes
 
-- name: Start Nexus Service
-  become: yes
+- name: Reload systemd daemon
+  command: systemctl daemon-reload
+
+- name: Restart Nexus Service
   systemd:
     name: nexus
     state: restarted
 
 - name: Remove working directory
-  become: yes
   file:
     path: /apps/{{ jira_card }}
     state: absent
