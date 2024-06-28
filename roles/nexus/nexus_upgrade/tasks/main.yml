@@ -1,9 +1,8 @@
 ---
 - name: Stop Nexus Service
-      become: yes
-      systemd:
-        name: nexus
-        state: stopped
+  systemd:
+    name: nexus.service
+    state: stopped
 
 - name: Change to the directory
   shell: "cd /apps/ && ls -alt"
