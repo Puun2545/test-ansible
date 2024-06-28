@@ -3,63 +3,52 @@
   hosts: aella-xplatform-mpoc-poc-ansible-dev-ec2
   become: yes
 
-  tasks:
-    - name: Update YUM package manager repositories
-      yum:
-        name: '*'
-        state: latest
+  vars:
+    nexus_version: "3.30.1-01"
+    nexus_home: "/apps/nexus"
+    nexus_data: "/apps/sonatype-work"
+    nexus_user: "nexus"
+    nexus_service: "nexus.service"
 
-    - name: Enable the Amazon Linux extras repository for Java 11
-      command: sudo amazon-linux-extras install java-openjdk11 -y
+  tasks:
+    - name: Install Java
+      apt:
+        name: openjdk-11-jdk
+        state: present
 
     - name: Create Nexus user
       user:
-        name: nexus
-        shell: /bin/bash
+        name: "{{ nexus_user }}"
+        system: yes
+        shell: /bin/false
 
     - name: Download Nexus
       get_url:
-        url: https://download.sonatype.com/nexus/3/latest-unix.tar.gz
-        dest: /tmp/nexus.tar.gz
-
-    - name: Create directory for Nexus
-      file:
-        path: /apps/nexus
-        state: directory
-        owner: nexus
-        group: nexus
+        url: "https://download.sonatype.com/nexus/3/nexus-{{ nexus_version }}-unix.tar.gz"
+        dest: "/tmp/nexus-{{ nexus_version }}-unix.tar.gz"
 
     - name: Extract Nexus
       unarchive:
-        src: /tmp/nexus.tar.gz
-        dest: /apps/nexus
+        src: "/tmp/nexus-{{ nexus_version }}-unix.tar.gz"
+        dest: "/apps"
         remote_src: yes
 
-    - name: Set Nexus ownership
-      command: chown -R nexus:nexus /apps/nexus
+    - name: Rename Nexus directory
+      command: mv /apps/nexus-{{ nexus_version }} {{ nexus_home }}
 
-    - name: Create Nexus data directory
+    - name: Set permissions
       file:
-        path: /opt/sonatype-work
-        state: directory
-        owner: nexus
-        group: nexus
+        path: "{{ item }}"
+        owner: "{{ nexus_user }}"
+        group: "{{ nexus_user }}"
+        recurse: yes
+      with_items:
+        - "{{ nexus_home }}"
+        - "{{ nexus_data }}"
 
-    - name: Find the extracted Nexus directory
-      find:
-        paths: /apps/nexus/
-        patterns: 'nexus-*'
-        use_regex: yes
-      register: nexus_dir
-
-    - name: Set JAVA_HOME in Nexus configuration
-      lineinfile:
-        path: "{{ item.path }}/bin/nexus.rc"
-        line: 'export JAVA_HOME=/usr/lib/jvm/java-11-openjdk'
-      with_items: "{{ nexus_dir.files }}"
-
-    - name: Configure Nexus as a service
+    - name: Configure Nexus to run as a service
       copy:
+        dest: /etc/systemd/system/{{ nexus_service }}
         content: |
           [Unit]
           Description=nexus service
@@ -68,32 +57,22 @@
           [Service]
           Type=forking
           LimitNOFILE=65536
-          ExecStart={{ item.path }}/bin/nexus start
-          ExecStop={{ item.path }}/bin/nexus stop
-          User=nexus
+          ExecStart={{ nexus_home }}/bin/nexus start
+          ExecStop={{ nexus_home }}/bin/nexus stop
+          User={{ nexus_user }}
           Restart=on-abort
 
           [Install]
           WantedBy=multi-user.target
-        dest: /etc/systemd/system/nexus.service
-        owner: root
-        group: root
-        mode: '0644'
-      with_items: "{{ nexus_dir.files }}"
 
-    - name: Reload systemd to apply Nexus service
-      command: systemctl daemon-reload
-
-    - name: Start Nexus service
+    - name: Enable and start Nexus service
       systemd:
-        name: nexus
+        name: "{{ nexus_service }}"
         enabled: yes
         state: started
 
-    - name: Check Nexus service status
-      command: systemctl status nexus.service
-      register: nexus_status
-
-    - name: Debug Nexus service status
-      debug:
-        var: nexus_status.stdout_lines
+    - name: Configure Nexus Data Directory
+      lineinfile:
+        path: "{{ nexus_home }}/bin/nexus.vmoptions"
+        line: "-Dkaraf.data={{ nexus_data }}"
+        create: yes
