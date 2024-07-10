@@ -5,23 +5,39 @@
 
   vars:
     nexus_home: "/apps/nexus"
+    nexus_data: "/apps/sonatype-work/nexus3"
     nexus_user: "nexus"
     nexus_service: "nexus.service"
 
   tasks:
+    - name: Install Java
+      apt:
+        name: openjdk-11-jdk
+        state: present
+      when: ansible_os_family == 'Debian'
+
+    - name: Install Java
+      yum:
+        name: java-11-openjdk
+        state: present
+      when: ansible_os_family == 'RedHat'
+
     - name: Create Nexus user
       user:
         name: "{{ nexus_user }}"
         system: yes
         shell: /bin/false
 
-    - name: Create directory for Nexus installation
+    - name: Create directories for Nexus installation
       file:
-        path: /apps/nexus
+        path: "{{ item }}"
         state: directory
-        owner: root
-        group: root
+        owner: "{{ nexus_user }}"
+        group: "{{ nexus_user }}"
         mode: '0755'
+      with_items:
+        - "{{ nexus_home }}"
+        - "{{ nexus_data }}"
 
     - name: Download Latest Nexus version 
       get_url:
@@ -61,6 +77,12 @@
         owner: "{{ nexus_user }}"
         group: "{{ nexus_user }}"
         recurse: yes
+
+    - name: Configure Nexus data directory
+      lineinfile:
+        path: /apps/nexus/bin/nexus.vmoptions
+        line: "-Dkaraf.data={{ nexus_data }}"
+        create: yes
 
     - name: Create Nexus systemd service file
       copy:
