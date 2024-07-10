@@ -33,8 +33,18 @@
         dest: /apps/nexus
         remote_src: yes
 
+    - name: List contents of /apps/nexus directory
+      command: ls -l /apps/nexus
+      register: dir_listing
+
+    - name: Debug dir listing
+      debug:
+        var: dir_listing.stdout_lines
+
     - name: Move extracted Nexus files
-      command: mv /apps/nexus/nexus-3*/* /apps/nexus/
+      command: mv /apps/nexus/nexus-*/ /apps/nexus/
+      when: "'nexus-' in item"
+      with_items: "{{ dir_listing.stdout_lines }}"
 
     - name: Set Nexus Ownership
       file:
