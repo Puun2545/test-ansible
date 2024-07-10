@@ -37,18 +37,11 @@
     - name: Extract Nexus
       unarchive:
         src: "/tmp/nexus-latest-unix.tar.gz"
-        dest: "/apps"
+        dest: "{{ nexus_home }}"
         remote_src: yes
 
-    - name: Find Nexus directory
-      find:
-        paths: /apps
-        patterns: "nexus-*"
-      register: nexus_dir
-
-    - name: rename Nexus directory
-      command: mv "{{ item.path }}" "{{ nexus_home }}"
-      with_items: "{{ nexus_dir.files }}"
+    - name: Move Nexus files
+      command: mv "{{ nexus_home }}-3*" "{{ nexus_home }}"
 
 
     - name: Set permissions
