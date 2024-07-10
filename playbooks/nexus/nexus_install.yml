@@ -4,7 +4,6 @@
   become: yes
 
   vars:
-    nexus_version: "3.30.1-01"
     nexus_home: "/apps/nexus"
     nexus_data: "/apps/sonatype-work"
     nexus_user: "nexus"
@@ -25,7 +24,7 @@
     - name: Download Nexus
       get_url:
         url: "https://download.sonatype.com/nexus/3/latest-unix.tar.gz"
-        dest: "/tmp/nexus-{{ nexus_version }}-unix.tar.gz"
+        dest: "/tmp/nexus-latest-unix.tar.gz"
 
     - name: Create /apps directory
       file:
@@ -37,12 +36,19 @@
 
     - name: Extract Nexus
       unarchive:
-        src: "/tmp/nexus-{{ nexus_version }}-unix.tar.gz"
+        src: "/tmp/nexus-latest-unix.tar.gz"
         dest: "/apps"
         remote_src: yes
 
+    - name: Find Nexus directory
+      find:
+        paths: /apps
+        patterns: "nexus-*"
+      register: nexus_dir
+
     - name: Rename Nexus directory
-      command: mv /apps/nexus-{{ nexus_version }} {{ nexus_home }}
+      command: mv "{{ nexus_dir.files[0].path }}" {{ nexus_home }}
+      when: nexus_dir.matched > 0
 
     - name: Set permissions
       file:
