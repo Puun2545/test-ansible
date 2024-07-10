@@ -41,10 +41,10 @@
 
     - name: Debug extracted directory
       debug:
-        var: nexus_extracted_dir.stdout
+        var: nexus_extracted_dir.stdout_lines
 
     - name: Move extracted Nexus files
-      command: mv {{ item }}* /apps/nexus/
+      shell: "mv {{ item }}* /apps/nexus/"
       with_items: "{{ nexus_extracted_dir.stdout_lines }}"
       when: nexus_extracted_dir.stdout_lines is defined and nexus_extracted_dir.stdout_lines|length > 0
 
