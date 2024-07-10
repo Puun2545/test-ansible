@@ -7,33 +7,56 @@
   hosts: all
   become: yes
   vars:
+    default_max_size: 100M
+    default_max_files: 3
     logrotate_configs:
       jenkins:
         path: /var/log/jenkins/jenkins.log
-        max_size: 100M
-        max_files: 3
+        user: jenkins
+        group: jenkins
+        postrotate: ## apps restart command ##
       sonarqube:
         path: /var/log/sonarqube/sonarqube.log
-        max_size: 100M
-        max_files: 3
+        user: sonarqube
+        group: sonarqube
+        postrotate: ## apps restart command ##
       nexus:
         path: /var/log/nexus/nexus.log
-        max_size: 100M
-        max_files: 3
-
+        user: nexus
+        group: nexus
+        postrotate: ## apps restart command ##
   tasks:
-    - name: Install logrotate
-      apt:
-        name: logrotate
-        state: present
+    # - name: PRE | Gather package facts
+    #   package_facts:
+    #     manager: auto
 
-    - name: Configure logrotate for the specified application
-      template:
-        src: templates/logrotate_2.j2
-        dest: /etc/logrotate.d/{{ app_name }}
-        owner: root
-        group: root
-        mode: '0644'
-      vars:
-        config: "{{ logrotate_configs[app_name] }}"
-      when: app_name in logrotate_configs
+    # - name: PRE | Install logrotate on Debian-based systems
+    #   apt:
+    #     name: logrotate
+    #     state: present
+    #   when: ansible_facts.packages.logrotate is not defined and ansible_os_family == "Debian"
+
+    # - name: PRE | Install logrotate on RedHat-based systems
+    #   yum:
+    #     name: logrotate
+    #     state: present
+    #   when: ansible_facts.packages.logrotate is not defined and ansible_os_family == "RedHat"
+
+      - name: Configure logrotate for the specified application
+            copy:
+              dest: /etc/logrotate.d/{{ app_name }}
+              content: |
+                {{ logrotate_configs[app_name].path }} {
+                    daily
+                    rotate {{ max_files | default(default_max_files) }}
+                    size {{ max_size | default(default_max_size) }}
+                    compress
+                    delaycompress
+                    missingok
+                    notifempty
+                    create 0640 {{ logrotate_configs[app_name].user }} {{ logrotate_configs[app_name].group }}
+                    sharedscripts
+                    postrotate
+                        /usr/bin/systemctl restart {{ app_name }} > /dev/null 2>/dev/null || true
+                    endscript
+            when: app_name in logrotate_configs

@@ -10,10 +10,6 @@
     nexus_service: "nexus.service"
 
   tasks:
-    # - name: Install Java
-    #   apt:
-    #     name: openjdk-11-jdk
-    #     state: present
 
     - name: Create Nexus user
       user:
@@ -55,10 +51,16 @@
         path: "{{ item }}"
         owner: "{{ nexus_user }}"
         group: "{{ nexus_user }}"
+        mode: '0755'
         recurse: yes
       with_items:
         - "{{ nexus_home }}"
         - "{{ nexus_data }}"
+
+    - name: Ensure nexus binary is executable
+      file:
+        path: "{{ nexus_home }}/bin/nexus"
+        mode: '0755'
 
     - name: Configure Nexus to run as a service
       copy:
