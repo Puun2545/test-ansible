@@ -27,8 +27,8 @@
       file:
         path: /apps
         state: directory
-        owner: root
-        group: root
+        owner: nexus
+        group: nexus
         mode: '0755'
 
     - name: Extract Nexus
