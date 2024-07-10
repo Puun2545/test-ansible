@@ -4,6 +4,7 @@
   become: yes
 
   vars:
+    nexus_home: "/apps/nexus"
     nexus_user: "nexus"
     nexus_service: "nexus.service"
 
@@ -33,18 +34,23 @@
         dest: /apps/nexus
         remote_src: yes
 
-    - name: List contents of /apps/nexus directory
-      command: ls -l /apps/nexus
-      register: dir_listing
-
-    - name: Debug dir listing
-      debug:
-        var: dir_listing.stdout_lines
+    - name: Find extracted Nexus directory
+      find:
+        paths: /apps/nexus
+        patterns: "nexus-*"
+        register: nexus_extracted_dir
 
     - name: Move extracted Nexus files
-      command: mv /apps/nexus/nexus-*/ /apps/nexus/
-      when: "'nexus-' in item"
-      with_items: "{{ dir_listing.stdout_lines }}"
+      command: mv "{{ item.path }}/*" /apps/nexus/
+      with_items: "{{ nexus_extracted_dir.files }}"
+      when: item.isdir is defined and item.isdir
+
+    - name: Remove extracted directory
+      file:
+        path: "{{ item.path }}"
+        state: absent
+      with_items: "{{ nexus_extracted_dir.files }}"
+      when: item.isdir is defined and item.isdir
 
     - name: Set Nexus Ownership
       file:
@@ -55,7 +61,7 @@
 
     - name: Create Nexus systemd service file
       copy:
-        dest: /etc/systemd/system/nexus.service
+        dest: /etc/systemd/system/{{ nexus_service }}
         content: |
           [Unit]
           Description=nexus service
