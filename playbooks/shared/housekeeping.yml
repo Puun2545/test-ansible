@@ -1,0 +1,33 @@
+---
+- name: Configure log rotation for applications
+  hosts: all
+  become: yes
+  vars:
+    logrotate_configs:
+      - name: jenkins
+        path: /var/log/jenkins/jenkins.log
+        max_size: 100M
+        max_files: 3
+      - name: sonarqube
+        path: /var/log/sonarqube/sonarqube.log
+        max_size: 100M
+        max_files: 3
+      - name: nexus
+        path: /var/log/nexus/nexus.log
+        max_size: 100M
+        max_files: 3
+
+  tasks:
+    - name: Install logrotate
+      apt:
+        name: logrotate
+        state: present
+
+    - name: Configure logrotate for applications
+      template:
+        src: logrotate_1.j2
+        dest: /etc/logrotate.d/{{ item.name }}
+        owner: root
+        group: root
+        mode: '0644'
+      loop: "{{ logrotate_configs }}"

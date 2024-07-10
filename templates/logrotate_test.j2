@@ -1,0 +1,14 @@
+/var/log/{{app_name}}/{{app_name}}.log {
+    daily
+    rotate 3
+    size 100M
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 root utmp
+    sharedscripts
+    postrotate
+        /usr/bin/killall -HUP {{ app_name }}
+    endscript
+}

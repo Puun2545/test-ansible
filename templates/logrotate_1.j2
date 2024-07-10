@@ -1,0 +1,14 @@
+{{ config.path }} {
+    daily
+    rotate {{ config.max_files }}
+    size {{ config.max_size }}
+    compress
+    delaycompress
+    missingok
+    notifempty
+    create 0640 root utmp
+    sharedscripts
+    postrotate
+        /usr/bin/killall -HUP {{ app_name }}
+    endscript
+}

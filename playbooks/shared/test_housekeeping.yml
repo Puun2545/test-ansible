@@ -1,0 +1,47 @@
+---
+# run playbook: ansible-playbook -i inventory logrotate_single.yml -e "app_name=jenkins"
+# run playbook: ansible-playbook -i inventory logrotate_single.yml -e "app_name=sonarqube"
+# run playbook: ansible-playbook -i inventory logrotate_single.yml -e "app_name=nexus"
+
+- name: Configure log rotation for applications
+  hosts: all
+  become: yes
+  # vars:
+  #   logrotate_configs:
+  #     jenkins:
+  #       path: /var/log/jenkins/jenkins.log
+  #       max_size: 100M
+  #       max_files: 3
+  #     sonarqube:
+  #       path: /var/log/sonarqube/sonarqube.log
+  #       max_size: 100M
+  #       max_files: 3
+  #     nexus:
+  #       path: /var/log/nexus/nexus.log
+  #       max_size: 100M
+  #       max_files: 3
+
+  tasks:
+    - name: Install logrotate
+      apt:
+        name: logrotate
+        state: present
+
+    - name: Configure logrotate for the specified application
+      copy:
+        dest: /etc/logrotate.d/{{ app_name }}
+        content: |
+          /var/log/{{app_name}}/{{app_name}}.log {
+              daily
+              rotate 3
+              size 100M
+              compress
+              delaycompress
+              missingok
+              notifempty
+              create 0640 root utmp
+              sharedscripts
+              postrotate
+                  /usr/bin/killall -HUP {{ app_name }}
+              endscript
+          }
