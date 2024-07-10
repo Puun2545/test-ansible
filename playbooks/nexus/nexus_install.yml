@@ -27,6 +27,14 @@
         url: "https://download.sonatype.com/nexus/3/latest-unix.tar.gz"
         dest: "/tmp/nexus-{{ nexus_version }}-unix.tar.gz"
 
+    - name: Create /apps directory
+      file:
+        path: /apps
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
     - name: Extract Nexus
       unarchive:
         src: "/tmp/nexus-{{ nexus_version }}-unix.tar.gz"
