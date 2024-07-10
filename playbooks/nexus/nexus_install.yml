@@ -37,18 +37,8 @@
     - name: Extract Nexus
       unarchive:
         src: "/tmp/nexus-latest-unix.tar.gz"
-        dest: "/apps"
+        dest: "{{ nexus_home }}"
         remote_src: yes
-
-    - name: Find extracted Nexus directory
-      find:
-        paths: /apps
-        patterns: "nexus-*"
-        register: nexus_extracted_dir
-
-    - name: Move Nexus files
-      command: mv "{{ item.path }}" "{{ nexus_home }}"
-      with_items: "{{ nexus_extracted_dir.files }}"
 
     - name: Set permissions
       file:
@@ -63,7 +53,7 @@
 
     - name: Ensure nexus binary is executable
       file:
-        path: "{{ nexus_home }}/bin/nexus"
+        path: "{{ nexus_home }}/nexus-3*/bin/nexus"
         mode: '0755'
 
     - name: Configure Nexus to run as a service
