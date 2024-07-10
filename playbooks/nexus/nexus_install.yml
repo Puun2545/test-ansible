@@ -11,6 +11,7 @@
 
   tasks:
 
+
     - name: Create Nexus user
       user:
         name: "{{ nexus_user }}"
@@ -36,15 +37,10 @@
         dest: "/apps"
         remote_src: yes
 
-    - name: Find Nexus directory
-      find:
-        paths: /apps
-        patterns: "nexus-*"
-      register: nexus_dir
-
-    - name: Rename Nexus directory
-      command: mv "{{ nexus_dir.files[0].path }}" {{ nexus_home }}
-      when: nexus_dir.matched > 0
+    - name: Move Nexus files
+      command: mv "{{ nexus_home }}-3*" "{{ nexus_home }}"
+      args:
+        chdir: "/apps"
 
     - name: Set permissions
       file:
