@@ -4,61 +4,48 @@
   become: yes
 
   vars:
-    nexus_home: "/apps/nexus"
-    nexus_data: "/apps/sonatype-work"
     nexus_user: "nexus"
     nexus_service: "nexus.service"
 
   tasks:
-    # - name: Install Java
-    #   apt:
-    #     name: openjdk-11-jdk
-    #     state: present
-
     - name: Create Nexus user
       user:
         name: "{{ nexus_user }}"
         system: yes
         shell: /bin/false
 
-    - name: Download Nexus
-      get_url:
-        url: "https://download.sonatype.com/nexus/3/latest-unix.tar.gz"
-        dest: "/tmp/nexus-latest-unix.tar.gz"
-
-    - name: Create /apps directory
+    - name: Create directory for Nexus installation
       file:
-        path: /apps
+        path: /apps/nexus
         state: directory
         owner: root
         group: root
         mode: '0755'
 
-    - name: Extract Nexus
+    - name: Download Latest Nexus version 
+      get_url:
+        url: "https://download.sonatype.com/nexus/3/latest-unix.tar.gz" 
+        dest: /apps/nexus/nexus.tar.gz
+
+    - name: Extract Nexus Archive
       unarchive:
-        src: "/tmp/nexus-latest-unix.tar.gz"
-        dest: "{{ nexus_home }}"
+        src: /apps/nexus/nexus.tar.gz
+        dest: /apps/nexus
         remote_src: yes
 
-    - name: Set permissions
+    - name: Move extracted Nexus files
+      command: mv /apps/nexus/nexus-3*/* /apps/nexus/
+
+    - name: Set Nexus Ownership
       file:
-        path: "{{ item }}"
+        path: /apps/nexus
         owner: "{{ nexus_user }}"
         group: "{{ nexus_user }}"
-        mode: '0755'
         recurse: yes
-      with_items:
-        - "{{ nexus_home }}"
-        - "{{ nexus_data }}"
 
-    - name: Ensure nexus binary is executable
-      file:
-        path: "{{ nexus_home }}/nexus-3*/bin/nexus"
-        mode: '0755'
-
-    - name: Configure Nexus to run as a service
+    - name: Create Nexus systemd service file
       copy:
-        dest: /etc/systemd/system/{{ nexus_service }}
+        dest: /etc/systemd/system/nexus.service
         content: |
           [Unit]
           Description=nexus service
@@ -66,26 +53,20 @@
 
           [Service]
           Type=forking
-          LimitNOFILE=65536
-          ExecStart={{ nexus_home }}/bin/nexus start
-          ExecStop={{ nexus_home }}/bin/nexus stop
+          ExecStart=/apps/nexus/bin/nexus start
+          ExecStop=/apps/nexus/bin/nexus stop
           User={{ nexus_user }}
           Restart=on-abort
 
           [Install]
           WantedBy=multi-user.target
-    
+
     - name: Reload systemd daemon
-      command: systemctl daemon-reload
-
-    - name: Enable and start Nexus service
       systemd:
-        name: "{{ nexus_service }}"
-        enabled: yes
-        state: started
+        daemon_reload: yes
 
-    - name: Configure Nexus Data Directory
-      lineinfile:
-        path: "{{ nexus_home }}/bin/nexus.vmoptions"
-        line: "-Dkaraf.data={{ nexus_data }}"
-        create: yes
+    - name: Start Nexus Service
+      systemd:
+        name: nexus
+        state: started
+        enabled: yes
