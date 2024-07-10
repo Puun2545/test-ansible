@@ -1,0 +1,44 @@
+---
+- name: Check nexus status
+  uri:
+    url: "{{ nexus_url }}/service/rest/v1/status"
+    user: "{{ nexus_user }}"
+    password: "{{ nexus_password }}"
+    method: GET
+    status_code: 200
+
+- name: Setup syslog
+  uri:
+    url: "{{ nexus_url }}/service/rest/v1/script/"
+    user: "{{ nexus_user }}"
+    password: "{{ nexus_password }}"
+    method: POST
+    body_format: json
+    body:
+      name: configure_syslog
+      type: groovy
+      content: "{{ lookup('template', 'configure_syslog.groovy.j2') }}"
+
+- name: Setup Backup and Retention
+  uri:
+    url: "{{ nexus_url }}/service/rest/v1/script/"
+    user: "{{ nexus_user }}"
+    password: "{{ nexus_password }}"
+    method: POST
+    body_format: json
+    body:
+      name: configure_backup
+      type: groovy
+      content: "{{ lookup('template', 'configure_backup.groovy.j2') }}"
+
+- name: Install Plugins
+  uri:
+    url: "{{ nexus_url }}/service/rest/v1/script/"
+    user: "{{ nexus_user }}"
+    password: "{{ nexus_password }}"
+    method: POST
+    body_format: json
+    body:
+      name: install_plugins
+      type: groovy
+      content: "{{ lookup('template', 'install_plugins.groovy.j2') }}"

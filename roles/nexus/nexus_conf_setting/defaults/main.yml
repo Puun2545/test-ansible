@@ -1,0 +1,12 @@
+nexus_url: http://nexus.example.com
+nexus_user: admin
+nexus_password: admin123
+nexus_plugins:
+  - nexus-repository-docker
+  - nexus-repository-npm
+  - nexus-repository-py
+syslog_host: syslog.example.com
+syslog_port: 514
+backup_dir: /path/to/backup
+backup_retention_days: 30
+log_retention_days: 60

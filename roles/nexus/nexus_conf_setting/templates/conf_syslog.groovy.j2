@@ -1,0 +1,14 @@
+def logManager = container.lookup(org.sonatype.nexus.log.LogManager.class.name)
+def syslogAppender = logManager.configuration.findAppender('SYSLOG')
+if (!syslogAppender) {
+  syslogAppender = logManager.createAppender('syslog', 'SYSLOG', [
+    host: '{{ syslog_host }}',
+    port: '{{ syslog_port }}',
+    layout: '%d{ISO8601} [%t] %-5p %c{1} - %m%n',
+    facility: 'USER',
+    stack_trace: 'true',
+    send_throwable: 'true'
+  ])
+  logManager.configuration.addAppender(syslogAppender)
+}
+logManager.configuration.save()

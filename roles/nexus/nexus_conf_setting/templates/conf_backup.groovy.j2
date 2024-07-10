@@ -1,0 +1,5 @@
+import org.sonatype.nexus.repository.storage.StorageFacet
+def storageFacet = repository.getRepositoryManager().repository('releases').facet(StorageFacet.class)
+def config = storageFacet.blobStore().getBlobStoreConfiguration()
+config.expiration = {{ backup_retention_days }}
+storageFacet.blobStore().setBlobStoreConfiguration(config)

@@ -1,0 +1,2 @@
+{{ nexus_plugins | map('regex_replace', '^', 'repository.createRepository(') | join('; ') }}
+

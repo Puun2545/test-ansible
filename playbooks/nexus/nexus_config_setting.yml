@@ -1,0 +1,70 @@
+---
+- name: Configure Nexus Repository Manager
+  hosts: nexus_server
+  vars_files:
+    - vars.yml
+  tasks:
+
+    - name: Ensure Nexus is up and running
+      uri:
+        url: "{{ nexus_url }}/service/rest/v1/status"
+        user: "{{ nexus_user }}"
+        password: "{{ nexus_password }}"
+        method: GET
+        status_code: 200
+
+    - name: Configure Syslog
+      uri:
+        url: "{{ nexus_url }}/service/rest/v1/script/"
+        user: "{{ nexus_user }}"
+        password: "{{ nexus_password }}"
+        method: POST
+        body_format: json
+        body:
+          name: configure_syslog
+          type: groovy
+          content: |
+            def logManager = container.lookup(org.sonatype.nexus.log.LogManager.class.name)
+            def syslogAppender = logManager.configuration.findAppender('SYSLOG')
+            if (!syslogAppender) {
+              syslogAppender = logManager.createAppender('syslog', 'SYSLOG', [
+                host: '{{ syslog_host }}',
+                port: '{{ syslog_port }}',
+                layout: '%d{ISO8601} [%t] %-5p %c{1} - %m%n',
+                facility: 'USER',
+                stack_trace: 'true',
+                send_throwable: 'true'
+              ])
+              logManager.configuration.addAppender(syslogAppender)
+            }
+            logManager.configuration.save()
+
+    - name: Configure Backup and Retention
+      uri:
+        url: "{{ nexus_url }}/service/rest/v1/script/"
+        user: "{{ nexus_user }}"
+        password: "{{ nexus_password }}"
+        method: POST
+        body_format: json
+        body:
+          name: configure_backup
+          type: groovy
+          content: |
+            import org.sonatype.nexus.repository.storage.StorageFacet
+            def storageFacet = repository.getRepositoryManager().repository('releases').facet(StorageFacet.class)
+            def config = storageFacet.blobStore().getBlobStoreConfiguration()
+            config.expiration = {{ backup_retention_days }}
+            storageFacet.blobStore().setBlobStoreConfiguration(config)
+
+    - name: Install Plugins
+      uri:
+        url: "{{ nexus_url }}/service/rest/v1/script/"
+        user: "{{ nexus_user }}"
+        password: "{{ nexus_password }}"
+        method: POST
+        body_format: json
+        body:
+          name: install_plugins
+          type: groovy
+          content: |
+            {{ nexus_plugins | map('regex_replace', '^', 'repository.createRepository(') | join('; ') }}
