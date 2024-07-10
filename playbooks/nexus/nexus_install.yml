@@ -35,22 +35,18 @@
         remote_src: yes
 
     - name: Find extracted Nexus directory
-      find:
-        paths: /apps/nexus
-        patterns: "nexus-*"
-        register: nexus_extracted_dir
+      command: ls -d /apps/nexus/nexus-*/
+      register: nexus_extracted_dir
 
     - name: Move extracted Nexus files
-      command: mv "{{ item.path }}/*" /apps/nexus/
-      with_items: "{{ nexus_extracted_dir.files }}"
-      when: item.isdir is defined and item.isdir
+      command: mv {{ item }}* /apps/nexus/
+      with_items: "{{ nexus_extracted_dir.stdout_lines }}"
 
     - name: Remove extracted directory
       file:
-        path: "{{ item.path }}"
+        path: "{{ item }}"
         state: absent
-      with_items: "{{ nexus_extracted_dir.files }}"
-      when: item.isdir is defined and item.isdir
+      with_items: "{{ nexus_extracted_dir.stdout_lines }}"
 
     - name: Set Nexus Ownership
       file:
