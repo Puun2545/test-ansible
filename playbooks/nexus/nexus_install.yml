@@ -10,7 +10,10 @@
     nexus_service: "nexus.service"
 
   tasks:
-
+    # - name: Install Java
+    #   apt:
+    #     name: openjdk-11-jdk
+    #     state: present
 
     - name: Create Nexus user
       user:
@@ -27,8 +30,8 @@
       file:
         path: /apps
         state: directory
-        owner: nexus
-        group: nexus
+        owner: root
+        group: root
         mode: '0755'
 
     - name: Extract Nexus
@@ -37,10 +40,16 @@
         dest: "/apps"
         remote_src: yes
 
-    - name: Move Nexus files
-      command: mv "{{ nexus_home }}-3*" "{{ nexus_home }}"
-      args:
-        chdir: "/apps"
+    - name: Find Nexus directory
+      find:
+        paths: /apps
+        patterns: "nexus-*"
+      register: nexus_dir
+
+    - name: rename Nexus directory
+      command: mv "{{ item.path }}" "{{ nexus_home }}"
+      with_items: "{{ nexus_dir.files }}"
+
 
     - name: Set permissions
       file:
